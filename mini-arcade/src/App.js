@@ -1,6 +1,8 @@
 import React, { useState } from 'react'; // Added { useState }
 import ClickerGame from './components/ClickerGame'; // import your game by using one of your own files
 import DinoGame from './components/DinoGame'; // again you are using somthing from the components file you made
+import SnakeGame from './components/SnakeGame'; // again you are using something from your "components" file to play a game you programmed
+
 
 import './App.css';
 
@@ -36,6 +38,18 @@ function App() {
           <DinoGame />
           </div>
         </div>
+    );
+  }
+// snake game else if statement
+  else if (activeGame === "Snake"){
+    return (
+    <div className = 'App'>
+      <h1>Classic Snake</h1>
+      <button className = "game-card" onClick = {goBack} style = {{marginBottom: '20px'}}> Back to Menu </button>
+      <div className = "game-container">
+        <SnakeGame />
+      </div>
+    </div>
     );
   }
 
