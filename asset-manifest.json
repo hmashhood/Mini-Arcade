@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/Mini-Arcade/static/css/main.e4f55a50.css",
+    "main.js": "/Mini-Arcade/static/js/main.e47f9929.js",
+    "static/js/453.7378c24e.chunk.js": "/Mini-Arcade/static/js/453.7378c24e.chunk.js",
+    "index.html": "/Mini-Arcade/index.html",
+    "main.e4f55a50.css.map": "/Mini-Arcade/static/css/main.e4f55a50.css.map",
+    "main.e47f9929.js.map": "/Mini-Arcade/static/js/main.e47f9929.js.map",
+    "453.7378c24e.chunk.js.map": "/Mini-Arcade/static/js/453.7378c24e.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.e4f55a50.css",
+    "static/js/main.e47f9929.js"
+  ]
+}
