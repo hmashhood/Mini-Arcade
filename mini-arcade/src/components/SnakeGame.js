@@ -1,111 +1,152 @@
 // this is the snake gmae that people played on their old brick phones and the one you played in class but without all the extra attributes and changes.
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 
-const SnakeGame = () => {
-  // The snake is an array of coordinates. [0] is the head.
-  const [snake, setSnake] = useState([{ x: 10, y: 10 }]);
+function SnakeGame() {
+  const [snake, setSnake] = useState([{ x: 10, y: 10 }, { x: 10, y: 11 }, { x: 10, y: 12 }]);
   const [food, setFood] = useState({ x: 5, y: 5 });
-  const [direction, setDirection] = useState({ x: 0, y: -1 }); // Moving UP by default
-  const [gameOver, setGameOver] = useState(false);
+  const [direction, setDirection] = useState({ x: 0, y: -1 });
+  const [isGameOver, setIsGameOver] = useState(false);
   const [score, setScore] = useState(0);
+  const [highScore, setHighScore] = useState(localStorage.getItem('snakeHighScore') || 0);
+  
+  // Use a Ref for the next direction to prevent "Input Delay"
+  const nextDirection = useRef({ x: 0, y: -1 });
 
-  // Logic to move the snake
-  const moveSnake = useCallback(() => {
-    if (gameOver) return;
+  const GRID_SIZE = 20;
 
-    const newSnake = [...snake];
-    const head = { x: newSnake[0].x + direction.x, y: newSnake[0].y + direction.y };
+  const resetGame = () => {
+    setSnake([{ x: 10, y: 10 }, { x: 10, y: 11 }, { x: 10, y: 12 }]);
+    setFood({ x: 5, y: 5 });
+    setDirection({ x: 0, y: -1 });
+    nextDirection.current = { x: 0, y: -1 };
+    setScore(0);
+    setIsGameOver(false);
+  };
 
-    // 1. Check if hit wall
-    if (head.x < 0 || head.x >= 20 || head.y < 0 || head.y >= 20) {
-      setGameOver(true);
-      return;
+  const handleKeyDown = useCallback((e) => {
+    switch (e.key) {
+      case "ArrowUp": if (direction.y === 0) nextDirection.current = { x: 0, y: -1 }; break;
+      case "ArrowDown": if (direction.y === 0) nextDirection.current = { x: 0, y: 1 }; break;
+      case "ArrowLeft": if (direction.x === 0) nextDirection.current = { x: -1, y: 0 }; break;
+      case "ArrowRight": if (direction.x === 0) nextDirection.current = { x: 1, y: 0 }; break;
+      case " ": if (isGameOver) resetGame(); break;
+      default: break;
     }
+  }, [direction, isGameOver]);
 
-    // 2. Check if hit self
-    for (let segment of newSnake) {
-      if (head.x === segment.x && head.y === segment.y) {
-        setGameOver(true);
-        return;
-      }
-    }
-
-    newSnake.unshift(head); // Add new head
-
-    // 3. Check if ate food
-    if (head.x === food.x && head.y === food.y) {
-      setScore(s => s + 10);
-      setFood({
-        x: Math.floor(Math.random() * 20),
-        y: Math.floor(Math.random() * 20)
-      });
-    } else {
-      newSnake.pop(); // Remove tail if no food eaten
-    }
-
-    setSnake(newSnake);
-  }, [snake, direction, food, gameOver]);
-
-  // Handle Keyboard Arrow Keys
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      switch (e.key) {
-        case "ArrowUp": if (direction.y !== 1) setDirection({ x: 0, y: -1 }); break;
-        case "ArrowDown": if (direction.y !== -1) setDirection({ x: 0, y: 1 }); break;
-        case "ArrowLeft": if (direction.x !== 1) setDirection({ x: -1, y: 0 }); break;
-        case "ArrowRight": if (direction.x !== -1) setDirection({ x: 1, y: 0 }); break;
-        default: break;
-      }
-    };
     window.addEventListener("keydown", handleKeyDown);
-    const gameLoop = setInterval(moveSnake, 150); // Speed of the snake
-    
-    return () => {
-      clearInterval(gameLoop);
-      window.removeEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
+  useEffect(() => {
+    const moveSnake = () => {
+      if (isGameOver) return;
+
+      setSnake((prev) => {
+        const head = { x: prev[0].x + nextDirection.current.x, y: prev[0].y + nextDirection.current.y };
+        setDirection(nextDirection.current);
+
+        // Wall Collision
+        if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
+          setIsGameOver(true);
+          return prev;
+        }
+
+        // Self Collision
+        if (prev.some(segment => segment.x === head.x && segment.y === head.y)) {
+          setIsGameOver(true);
+          return prev;
+        }
+
+        const newSnake = [head, ...prev];
+
+        // Food Collision
+        if (head.x === food.x && head.y === food.y) {
+          setScore(s => s + 1);
+          setFood({
+            x: Math.floor(Math.random() * GRID_SIZE),
+            y: Math.floor(Math.random() * GRID_SIZE)
+          });
+        } else {
+          newSnake.pop();
+        }
+
+        return newSnake;
+      });
     };
-  }, [moveSnake, direction]);
+
+    const gameLoop = setInterval(moveSnake, 100); // Constant speed
+    return () => clearInterval(gameLoop);
+  }, [food, isGameOver]);
+
+  useEffect(() => {
+    if (isGameOver && score > highScore) {
+      setHighScore(score);
+      localStorage.setItem('snakeHighScore', score);
+    }
+  }, [isGameOver, score, highScore]);
 
   return (
-    <div style={{ textAlign: 'center', color: 'white' }}>
-      <h3>Score: {score}</h3>
-      {gameOver && <h2 style={{ color: '#ff4757' }}>GAME OVER!</h2>}
+    <div style={{ textAlign: 'center', color: 'white', fontFamily: 'Arial' }}>
+      <div style={{ marginBottom: '10px', fontSize: '1.2rem' }}>
+        Score: {score} | Best: {highScore}
+      </div>
       
       <div style={{ 
-        position: 'relative', 
-        width: '400px', 
-        height: '400px', 
-        background: '#1a1a1a', 
-        border: '2px solid #4CAF50', 
-        margin: '20px auto' 
+        position: 'relative', width: '400px', height: '400px', 
+        background: '#0e1111', border: '4px solid #333', margin: 'auto' 
       }}>
-        {/* Render Snake */}
-        {snake.map((segment, i) => (
-          <div key={i} style={{
-            position: 'absolute',
-            left: `${segment.x * 20}px`,
-            top: `${segment.y * 20}px`,
-            width: '18px',
-            height: '18px',
-            background: i === 0 ? '#4CAF50' : '#45a049', // Head is brighter
-            borderRadius: '2px'
-          }} />
-        ))}
+        {/* Snake Rendering */}
+        {snake.map((segment, i) => {
+          const isHead = i === 0;
+          return (
+            <div key={i} style={{
+              position: 'absolute',
+              left: `${segment.x * 20}px`,
+              top: `${segment.y * 20}px`,
+              width: '18px',
+              height: '18px',
+              background: isHead ? '#2ecc71' : '#27ae60', // Head is brighter green
+              borderRadius: isHead ? '4px' : '2px', // Rounder head
+              zIndex: isHead ? 2 : 1,
+              border: '1px solid #0e1111' // Creates the "segment" look
+            }}>
+              {/* Eyes for the head to show direction */}
+              {isHead && (
+                <div style={{
+                  position: 'absolute',
+                  width: '4px', height: '4px', background: 'white',
+                  top: '4px', left: direction.x === 1 ? '12px' : '2px',
+                  borderRadius: '50%'
+                }} />
+              )}
+            </div>
+          );
+        })}
 
-        {/* Render Food */}
+        {/* Food Rendering */}
         <div style={{
           position: 'absolute',
-          left: `${food.x * 20}px`,
-          top: `${food.y * 20}px`,
-          width: '18px',
-          height: '18px',
-          background: '#ff4757',
-          borderRadius: '50%'
+          left: `${food.x * 20}px`, top: `${food.y * 20}px`,
+          width: '18px', height: '18px', background: '#e74c3c',
+          borderRadius: '50%', boxShadow: '0 0 10px #e74c3c'
         }} />
+
+        {isGameOver && (
+          <div style={{
+            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+            background: 'rgba(0,0,0,0.8)', display: 'flex', flexDirection: 'column',
+            justifyContent: 'center', alignItems: 'center'
+          }}>
+            <h2 style={{ color: '#e74c3c' }}>CRASHED!</h2>
+            <p>Press Space or click Back to Menu</p>
+            <button onClick={resetGame} className="game-card" style={{ padding: '10px 20px' }}>Try Again</button>
+          </div>
+        )}
       </div>
-      <p>Use Arrow Keys to Move</p>
     </div>
   );
-};
+}
 
 export default SnakeGame;
