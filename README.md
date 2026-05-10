@@ -2,9 +2,6 @@
 
 A fully interactive, browser-based gaming arcade built with **React**. This project features multiple classic game styles, persistent high scores, and responsive gameplay mechanics.
 
-## Live Demo
-*(Once you host your site, paste the link here! e.g., https://your-username.github.io/my-react-arcade)*
-
 ---
 
 ## Featured Games
